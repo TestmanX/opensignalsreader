@@ -245,7 +245,7 @@ def eda(samples=None, resolution=10):
 	# Compute & check input
 	eda_samples = np.asarray([((float(s) / (2 ** resolution)) * 3.3) / 0.132 for s in samples])
 	_check_ranges(eda_samples, 'EDA')
-	return _check_ranges
+	return eda_samples
 
 
 def acc(samples=None, resolution=10, c_min=400, c_max=600):

@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Package imports
-from .transfer_functions import bit
+from transfer_functions import bit
 
 class OpenSignalsReader():
     """This class reads OpenSignals files (metadata & sensor data) and converts sensor data into original units
@@ -65,6 +65,9 @@ class OpenSignalsReader():
 
     """
 
+    TIME_LABEL = 'Time (s)'
+    CHANNEL_TYPE_ERROR = 'Please provide only channel numbers (int) or channel labels (str).'
+
     def __init__(self, os_file=None, show=False, raw=False):
         # Member variables (acquisition metadata)
         self.file = None
@@ -73,22 +76,22 @@ class OpenSignalsReader():
         self.name = None
         self.mac = None
         self.sensors = None
-        self.sampling_resolution = dict()
+        self.sampling_resolution = {}
         self.sampling_rate = None
         self.transfer_functions = None
         self.channels = None
-        self.labels = dict()
-        self.digital = dict()
-        self.info = dict()
-        self._converted_signals = dict()
-        self._raw_signals = dict()
-        self._sensor_channels = dict()
-        self._channels_sensors = dict()
-        self._resolutions = dict()
+        self.labels = {}
+        self.digital = {}
+        self.info = {}
+        self._converted_signals = {}
+        self._raw_signals = {}
+        self._sensor_channels = {}
+        self._channels_sensors = {}
+        self._resolutions = {}
         self._labels = []
 
         # Read files
-        if os_file is not None:
+        if os_file != None:
             self._read_file(os_file)
             if show:
                 self.plot(raw=raw)
@@ -112,7 +115,7 @@ class OpenSignalsReader():
         # Check input
         if type(os_file) is str:
             os_file = open(os_file, 'r')
-        elif type(os_file) is not file:
+        else:
             raise TypeError("Incompatible input. Please specify file path or file object.")
 
         self.file = os_file
@@ -135,7 +138,6 @@ class OpenSignalsReader():
         # Load metadata
         data = json.loads(self.file.readline().replace('#', ''))
         data = data[list(data.keys())[0]]
-        #data = data[str(data.keys()[0])]
 
         if data['device'] != 'biosignalsplux':
             # Load data if the acquisition device has been a BITalino
@@ -148,7 +150,7 @@ class OpenSignalsReader():
                     self.sensors[i] = sens.replace('BIT', '')
 
             # Save metadata in info dictionary
-            self.info = dict()
+            self.info = {}
             self.info.update({'device name': data['device name']})
             self.info.update({'column': [str(x) for x in data['column']]})
             self.info.update({'time': data['time']})
@@ -170,7 +172,7 @@ class OpenSignalsReader():
             self.channels = self.info['channels']
             self._labels = [str(x) for x in self.info['label']]
 
-            if self.device == 'bitalino' or 'bitalino_rev':
+            if self.device == 'bitalino' or self.device == 'bitalino_rev':
                 self.ranges = bit.ranges
                 self.units = bit.units
                 self.transfer_functions = bit.transfer_functions
@@ -288,7 +290,7 @@ class OpenSignalsReader():
             If sensor label does not exist (int or str input).
         """
         # Return all signals
-        if sensors is None:
+        if sensors == None:
             output = self._converted_signals
 
         # Return all signals of a list in a wrapped in a dictionary
@@ -298,9 +300,9 @@ class OpenSignalsReader():
                 # Check if channels exists
                 _na_sensors = [x for x in sensors if x not in self._sensor_channels.keys()]
                 if _na_sensors:
-                        raise ValueError("Could not find channel(s) %s in available channels." % str(_na_sensors))
+                        raise ValueError(f"Could not find channel(s) {_na_sensors} in available channels.")
                 keys = [self._sensor_channels[key] for key in sensors]
-                output = dict()
+                output = {}
 
                 # Prepare output
                 for key in keys:
@@ -311,15 +313,15 @@ class OpenSignalsReader():
                 # Check if labels exists
                 _na_sensors = [x for x in sensors if x not in self.sensors]
                 if _na_sensors:
-                    raise ValueError("Could not find '%s' in available sensor data." % str(_na_sensors))
+                    raise ValueError(f"Could not find {_na_sensors} in available sensor data.")
 
-                output = dict()
+                output = {}
                 # Prepare output
                 for key in sensors:
                     output.update({key: self._converted_signals[key]})
             # Raise error if list contains mixed channel numbers and sensor labels
             else:
-                raise TypeError('Please provide only channel numbers (int) or channel labels (str).')
+                raise TypeError(self.CHANNEL_TYPE_ERROR)
 
         # Return single sensor data wrapped in numpy array
         elif (type(sensors) is list and len(sensors) == 1) or (type(sensors) is int) or (type(sensors) is str):
@@ -331,14 +333,14 @@ class OpenSignalsReader():
                 if sensors in self._sensor_channels.keys():
                     output = self._converted_signals[self._sensor_channels[sensors]]
                 else:
-                    raise ValueError("Could not find channel %i in available channels." % sensors)
+                    raise ValueError(f"Could not find channel {sensors} in available channels.")
 
             # Sensor label
             if type(sensors) is str:
                 if sensors in self.sensors:
                     output = self._converted_signals[sensors]
                 else:
-                    raise ValueError("Could not find '%s' in available sensor data." % sensors)
+                    raise ValueError(f"Could not find '{sensors}' in available sensor data.")
 
         return output
 
@@ -370,7 +372,7 @@ class OpenSignalsReader():
             If sensor label does not exist (int or str input).
         """
         # Return all signals
-        if sensors is None:
+        if sensors == None:
             output = self._raw_signals
 
         # Return all signals of a list in a wrapped in a dictionary
@@ -380,9 +382,9 @@ class OpenSignalsReader():
                 # Check if channels exists
                 _na_sensors = [x for x in sensors if x not in self._sensor_channels.keys()]
                 if _na_sensors:
-                    raise ValueError("Could not find channel(s) %s in available channels." % str(_na_sensors))
+                    raise ValueError(f"Could not find channel(s) {str(_na_sensors)} in available channels.")
                 keys = [self._sensor_channels[key] for key in sensors]
-                output = dict()
+                output = {}
 
                 # Prepare output
                 for key in keys:
@@ -393,15 +395,15 @@ class OpenSignalsReader():
                 # Check if labels exists
                 _na_sensors = [x for x in sensors if x not in self.sensors]
                 if _na_sensors:
-                    raise ValueError("Could not find '%s' in available sensor data." % str(_na_sensors))
+                    raise ValueError(f"Could not find '{str(_na_sensors)}' in available sensor data.")
 
-                output = dict()
+                output = {}
                 # Prepare output
                 for key in sensors:
                     output.update({key: self._raw_signals[key]})
             # Raise error if list contains mixed channel numbers and sensor labels
             else:
-                raise TypeError('Please provide only channel numbers (int) or channel labels (str).')
+                raise TypeError(self.CHANNEL_TYPE_ERROR)
 
         # Return single sensor data wrapped in numpy array
         elif (type(sensors) is list and len(sensors) == 1) or (type(sensors) is int) or (type(sensors) is str):
@@ -413,14 +415,14 @@ class OpenSignalsReader():
                 if sensors in self._sensor_channels.keys():
                     output = self._raw_signals[self._sensor_channels[sensors]]
                 else:
-                    raise ValueError("Could not find channel %i in available channels." % sensors)
+                    raise ValueError(f"Could not find channel {sensors} in available channels.")
 
             # Sensor label
             if type(sensors) is str:
                 if sensors in self.sensors:
                     output = self._raw_signals[sensors]
                 else:
-                    raise ValueError("Could not find '%s' in available sensor data." % sensors)
+                    raise ValueError(f"Could not find '{sensors}' in available sensor data.")
 
         return output
 
@@ -455,29 +457,29 @@ class OpenSignalsReader():
             If sensors contain a mix of sensors labels and channel numbers.
         """
         # Check plot start time
-        if sensors is None:
+        if sensors == None:
             sensors = self.sensors if np.size(self.sensors) > 1 else self.sensors[0]
-        elif sensors is not None:
+        elif sensors != None:
             if type(sensors) is list and len(sensors) > 1:
                 if all(isinstance(x, int) for x in sensors):
                     _na_sensors = [x for x in sensors if x not in self._sensor_channels.keys()]
                     if _na_sensors:
-                            raise ValueError("Could not find channel(s) %s in available channels." % str(_na_sensors))
+                            raise ValueError(f"Could not find channel(s) {str(_na_sensors)} in available channels.")
                     sensors = [self._sensor_channels[key] for key in sensors]
                 elif all(isinstance(x, str) for x in sensors):
                     _na_sensors = [x for x in sensors if x not in self.sensors]
                     if _na_sensors:
-                        raise ValueError("Could not find '%s' in available sensor data." % str(_na_sensors))
+                        raise ValueError(f"Could not find '{str(_na_sensors)}' in available sensor data.")
                     sensors = [x for x in sensors if x in self.sensors]
                 else:
-                    raise TypeError('Please provide only channel numbers (int) or channel labels (str).')
+                    raise TypeError(self.CHANNEL_TYPE_ERROR)
             elif (type(sensors) is list and len(sensors) == 1) or (type(sensors) is int) or (type(sensors) is str):
                 if type(sensors) is list:
                     sensors = sensors[0] if type(sensors[0]) is str else self._sensor_channels[sensors[0]]
                 elif type(sensors) is int:
                     sensors = self._sensor_channels[sensors]
 
-        if interval is None:
+        if interval == None:
             interval = [0, self.t[-1]]
         elif interval[0] >= interval[1] or interval[0] < 0 or interval[1] < 0:
             interval = [0, self.t[-1]]
@@ -485,11 +487,11 @@ class OpenSignalsReader():
 
         # Create plots
         if np.size(sensors) > 1:
-            if sensors is None:
+            if sensors == None:
                 sensors = self.sensors
 
             # Plot multiple sensor signals
-            if figsize is None:
+            if figsize == None:
                 figsize = (12, 6)
 
             n_plots = len(sensors)
@@ -503,7 +505,7 @@ class OpenSignalsReader():
                 rows, columns = 3, 2
 
             fig, axs = plt.subplots(nrows=rows, ncols=columns, sharex=True, figsize=figsize)
-            fig.suptitle('Sensor Signals\n(OpenSignals (r)evolution file: %s)' % self.file_name)
+            fig.suptitle(f'Sensor Signals\n(OpenSignals (r)evolution file: {self.file_name})')
 
             # Plot signals
             k = 0
@@ -530,17 +532,17 @@ class OpenSignalsReader():
                 if columns == 2:
                     axs[row][column].plot(self.t, signal)
                     axs[row][column].axis([interval[0], interval[1], ranges[0], ranges[1]])
-                    axs[row][column].set_ylabel('CH%i - %s (%s)' % (channel, sens, units))
+                    axs[row][column].set_ylabel(f'CH{channel} - {sens} ({units})')
                     axs[row][column].grid()
                     if row == rows - 1:
-                        axs[row][column].set_xlabel('Time (s)')
+                        axs[row][column].set_xlabel(self.TIME_LABEL)
                 else:
                     axs[row].plot(self.t, signal)
                     axs[row].axis([interval[0], interval[1], ranges[0], ranges[1]])
-                    axs[row].set_ylabel('CH%i - %s (%s)' % (channel, sens, units))
+                    axs[row].set_ylabel(f'CH{channel} - {sens} ({units})')
                     axs[row].grid()
                     if row == rows - 1:
-                        axs[row].set_xlabel('Time (s)')
+                        axs[row].set_xlabel(self.TIME_LABEL)
                 # Manage rows and columns
                 if row < rows - 1:
                     row += 1
@@ -550,7 +552,7 @@ class OpenSignalsReader():
         else:
             # Plot single sensor signal
             channel = self._channels_sensors[sensors]
-            if figsize is None:
+            if figsize == None:
                 figsize = (12, 4)
             if raw:
                 signal = self._raw_signals[sensors]
@@ -561,13 +563,13 @@ class OpenSignalsReader():
                 units = self.units[sensors]
                 ranges = self.ranges[sensors]
             fig = plt.figure(figsize=figsize)
-            fig.suptitle('Sensor Signals - OpenSignals (r)evolution file: %s' % self.file_name)
+            fig.suptitle(f'Sensor Signals - OpenSignals (r)evolution file: {self.file_name}')
             ax = fig.add_subplot(111)
             key = self._get_key(sensors)
             ax.plot(self.t, signal)
             ax.axis([interval[0], interval[1], ranges[0], ranges[1]])
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('CH%i - %s (%s)' % (channel, sensors, units))
+            ax.set_xlabel(self.TIME_LABEL)
+            ax.set_ylabel(f'CH{channel} - {sensors} ({units})')
             ax.grid()
 
         if show:
