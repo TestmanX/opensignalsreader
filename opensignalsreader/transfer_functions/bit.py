@@ -42,7 +42,7 @@ Notes Up To Version 0.2.1
 
 Last Update
 -----------
-06.06.2018
+04.10.2026
 
 """
 import warnings
@@ -355,10 +355,10 @@ def temp(samples=None, resolution=10, unit='c'):
 	# Compute in degrees Celcius
 	temp = np.asarray([(float(s) / 2 ** resolution - 0.5) * 100 for s in samples])
 
-	if unit is 'f':
+	if unit == 'f':
 		# Convert to Fahrenheit
 		temp = temp * 9. / 5 + 32
-	elif unit is 'k':
+	elif unit == 'k':
 		# Convert to Kelvin
 		temp = temp - 273.15
 
@@ -432,10 +432,10 @@ def ntc(samples=None, resolution=10, unit='c'):
 	# Compute temperature in Kelvin
 	temp = np.asarray(1 / (a0 + a1 * np.log(ntc) + a2 * np.log(ntc) ** 3))
 
-	if unit is 'c':
+	if unit == 'c':
 		# Convert to Celcius
 		temp = temp - 273.15
-	elif unit is 'f':
+	elif unit == 'f':
 		# Convert to Fahrenheit
 		temp = (temp - 273.15) * 9. / 5 + 32
 
@@ -758,10 +758,11 @@ def _check_input(samples, resolution=None):
 		raise TypeError("Unsupported data format")
 
 	# Check resolution
-	if resolution is not 6 and not 10:
+	if resolution == 6 or resolution == 10:
+		return np.asarray(samples)
+	else:
 		raise ValueError("Unsupported sampling resolution for BITalino devices (6-bit or 10-bit supported)")
 
-	return np.asarray(samples)
 
 
 def _check_ranges(signal, sensor):
